@@ -13,11 +13,13 @@ import uuid
 import logging
 from datetime import datetime
 from flask import Flask, jsonify, request, abort
+from flask_cors import CORS
 
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:3000"])
 app.config["JSON_SORT_KEYS"] = False
 
 logging.basicConfig(

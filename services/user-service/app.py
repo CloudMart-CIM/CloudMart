@@ -17,11 +17,13 @@ from functools import wraps
 from flask import Flask, jsonify, request, abort
 import bcrypt
 import jwt as pyjwt
+from flask_cors import CORS
 
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:3000"])
 app.config["JSON_SORT_KEYS"] = False
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "cloudmart-dev-secret-change-in-production")
