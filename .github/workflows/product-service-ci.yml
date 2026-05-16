@@ -1,0 +1,73 @@
+# CI for Product Catalog Service
+
+name: product-service-ci
+
+on:
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.8"
+
+            - name: Build application
+              run: |
+                  cd services/product-service
+                  pip install
+                  pip install -r requirements.txt
+
+            - name: Run tests
+              run: |
+                  cd services/product-service
+                  python -m pytest
+
+    code-quality:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.8"
+
+            - name: Run tests
+              run: |
+                  cd services/product-service
+                  python -m pytest
+
+    docker:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Install Docker
+              uses: docker/setup-buildx-action@v1
+
+            - name: Login to Docker
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKER_USERNAME }}
+                  password: ${{ secrets.DOCKER_TOKEN }}
+
+            - name: Docker Push
+              uses: docker/build-push-action@v6
+              with:
+                  context: services/product-service
+                  file: services/product-service/Dockerfile
+                  push: true
+                  tags: ${{ secrets.DOCKER_USERNAME }}/cloudmart-product-service:${{github.run_id}}
