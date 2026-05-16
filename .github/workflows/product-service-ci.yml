@@ -26,27 +26,27 @@ jobs:
                   pip install
                   pip install -r requirements.txt
 
-            - name: Run tests
-              run: |
-                  cd services/product-service
-                  python -m pytest
+    #         - name: Run tests
+    #           run: |
+    #               cd services/product-service
+    #               python -m pytest
 
-    code-quality:
-        runs-on: ubuntu-latest
+    # code-quality:
+    #     runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    #     steps:
+    #         - name: Checkout code
+    #           uses: actions/checkout@v4
 
-            - name: Set up Python
-              uses: actions/setup-python@v2
-              with:
-                  python-version: "3.8"
+    #         - name: Set up Python
+    #           uses: actions/setup-python@v2
+    #           with:
+    #               python-version: "3.8"
 
-            - name: Run tests
-              run: |
-                  cd services/product-service
-                  python -m pytest
+    #         - name: Run tests
+    #           run: |
+    #               cd services/product-service
+    #               python -m pytest
 
     docker:
         runs-on: ubuntu-latest

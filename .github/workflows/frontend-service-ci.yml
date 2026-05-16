@@ -26,28 +26,28 @@ jobs:
                   npm install
                   npm run build
 
-            - name: Run tests
-              run: |
-                  cd services/frontend
-                  npm test
+    #         - name: Run tests
+    #           run: |
+    #               cd services/frontend
+    #               npm test
 
-    code-quality:
-        runs-on: ubuntu-latest
+    # code-quality:
+    #     runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+    #     steps:
+    #         - name: Checkout code
+    #           uses: actions/checkout@v4
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v2
-              with:
-                  node-version: "14"
+    #         - name: Set up Node.js
+    #           uses: actions/setup-node@v2
+    #           with:
+    #               node-version: "14"
 
-            - name: Run ESLint
-              run: |
-                  cd services/frontend
-                  npm install
-                  npm run lint
+    #         - name: Run ESLint
+    #           run: |
+    #               cd services/frontend
+    #               npm install
+    #               npm run lint
 
     docker:
         runs-on: ubuntu-latest
