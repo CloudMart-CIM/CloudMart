@@ -79,4 +79,47 @@ variable "allowed_ssh_cidrs" {
 variable "ecr_repositories" {
   description = "List of ECR repositories to create"
   type        = list(string)
+  default     = []
+}
+
+variable "db_name" {
+  description = "PostgreSQL database name for user-service"
+  type        = string
+  default     = "cloudmart_users"
+}
+
+variable "db_username" {
+  description = "PostgreSQL master username"
+  type        = string
+  default     = "cloudmartadmin"
+}
+
+variable "db_password" {
+  description = "PostgreSQL master password. If not set, a random password will be generated and stored in Secrets Manager."
+  type        = string
+  sensitive   = true
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class for PostgreSQL"
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "Allocated storage for RDS PostgreSQL in GB"
+  type        = number
+  default     = 20
+}
+
+variable "db_multi_az" {
+  description = "Enable Multi-AZ for RDS. Keep false for cost saving."
+  type        = bool
+  default     = false
+}
+
+variable "ses_verified_email" {
+  description = "Email address to verify in Amazon SES for sending notifications"
+  type        = string
+  default     = ""
 }
