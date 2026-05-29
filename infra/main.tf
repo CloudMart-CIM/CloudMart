@@ -25,3 +25,13 @@ module "security-groups" {
   vpc_id            = module.vpc.vpc_id
   vpc_cidr          = var.vpc_cidr
 }
+
+module "ecr" {
+  source = "./modules/ecr"
+
+  project_name      = var.project_name
+  team              = var.team
+  environment       = var.environment
+  owner             = var.owner
+  ecr_repositories = var.ecr_repositories
+}

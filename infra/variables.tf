@@ -75,3 +75,8 @@ variable "allowed_ssh_cidrs" {
   type        = list(string)
   default     = []
 }
+
+variable "ecr_repositories" {
+  description = "List of ECR repositories to create"
+  type        = list(string)
+}
