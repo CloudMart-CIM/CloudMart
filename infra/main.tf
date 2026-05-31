@@ -16,6 +16,7 @@ module "vpc" {
 
 module "security-groups" {
   source = "./modules/security-groups"
+  depends_on = [module.vpc]
 
   allowed_ssh_cidrs = var.allowed_ssh_cidrs
   project_name      = var.project_name
@@ -48,6 +49,7 @@ module "kms" {
 
 module "secrets-manager" {
   source = "./modules/secrets-manager"
+  depends_on = [module.kms, module.sqs, module.rds]
 
   project_name = var.project_name
   team         = var.team
@@ -66,6 +68,7 @@ module "secrets-manager" {
 
 module "sqs" {
   source = "./modules/sqs"
+  depends_on = [module.kms]
 
   project_name = var.project_name
   team         = var.team
@@ -86,6 +89,7 @@ module "ses" {
 
 module "dynamodb" {
   source = "./modules/dynamodb"
+  depends_on = [module.kms]
 
   project_name = var.project_name
   team         = var.team
@@ -96,6 +100,7 @@ module "dynamodb" {
 
 module "rds" {
   source = "./modules/rds"
+  depends_on = [module.vpc, module.security-groups, module.kms]
 
   project_name            = var.project_name
   team                    = var.team
@@ -110,4 +115,28 @@ module "rds" {
   private_data_subnet_ids = module.vpc.private_data_subnet_ids
   kms_key_arn             = module.kms.kms_key_arn
   rds_security_group_id   = module.security-groups.rds_security_group_id
+}
+
+module "eks" {
+  source = "./modules/eks"
+  depends_on = [module.vpc, module.security-groups, module.kms]
+
+  project_name            = var.project_name
+  team                    = var.team
+  environment             = var.environment
+  owner                   = var.owner
+
+  cluster_name            = var.cluster_name
+  eks_version             = var.eks_version
+  subnet_ids              = module.vpc.public_subnet_ids
+  private_subnet_ids      = module.vpc.private_app_subnet_ids
+  eks_security_group_id   = module.security-groups.eks_cluster_security_group_id
+  kms_key_arn             = module.kms.kms_key_arn
+
+  eks_node_instance_types     = var.eks_node_instance_types
+  eks_node_capacity_type      = var.eks_node_capacity_type
+  eks_node_desired_size       = var.eks_node_desired_size
+  eks_node_min_size           = var.eks_node_min_size
+  eks_node_max_size           = var.eks_node_max_size
+  eks_node_disk_size          = var.eks_node_disk_size
 }

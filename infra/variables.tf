@@ -124,6 +124,48 @@ variable "ses_verified_email" {
   default     = ""
 }
 
+variable "eks_version" {
+  description = "Kubernetes version for EKS cluster"
+  type        = string
+  default     = "1.32"
+}
+
+variable "eks_node_instance_types" {
+  description = "Instance types for EKS managed node group"
+  type        = list(string)
+  default     = ["t3.medium"]
+}
+
+variable "eks_node_capacity_type" {
+  description = "Capacity type for EKS nodes: ON_DEMAND or SPOT"
+  type        = string
+  default     = "ON_DEMAND"
+}
+
+variable "eks_node_desired_size" {
+  description = "Desired number of EKS worker nodes"
+  type        = number
+  default     = 2
+}
+
+variable "eks_node_min_size" {
+  description = "Minimum number of EKS worker nodes"
+  type        = number
+  default     = 2
+}
+
+variable "eks_node_max_size" {
+  description = "Maximum number of EKS worker nodes"
+  type        = number
+  default     = 3
+}
+
+variable "eks_node_disk_size" {
+  description = "Disk size for EKS worker nodes in GiB"
+  type        = number
+  default     = 30
+}
+
 variable "key_version" {
   description = "Version identifier for KMS key alias (e.g., v1, v2)"
   type        = string
