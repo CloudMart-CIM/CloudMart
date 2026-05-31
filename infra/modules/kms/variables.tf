@@ -17,3 +17,8 @@ variable "owner" {
   description = "Owner email or student email"
   type        = string
 }
+
+variable "key_version" {
+  description = "Version identifier for KMS key alias (e.g., v1, v2)"
+  type        = string
+}

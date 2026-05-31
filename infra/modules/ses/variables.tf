@@ -22,19 +22,3 @@ variable "ses_verified_email" {
   description = "Email address to verify in SES for sending notifications"
   type        = string
 }
-
-variable "aws_region" {
-  description = "AWS region for SES and SQS resources"
-  type        = string
-}
-
-variable "kms_key_arn" {
-  description = "KMS key ARN for SES secrets encryption"
-  type        = string
-}
-
-# aws_sqs_queue.order_events.url
-variable "sqs_queue_url" {
-  description = "SQS queue URL for notification service to send messages"
-  type        = string
-}

@@ -43,6 +43,7 @@ module "kms" {
   team         = var.team
   environment  = var.environment
   owner        = var.owner
+  key_version  = var.key_version
 }
 
 module "secrets-manager" {
@@ -57,6 +58,10 @@ module "secrets-manager" {
   db_name      = var.db_name
   db_username  = var.db_username
   db_password  = var.db_password
+  kms_key_arn  = module.kms.kms_key_arn
+  aws_region   = var.aws_region
+  ses_verified_email = var.ses_verified_email
+  sqs_queue_url = module.sqs.order_events_queue_url
 }
 
 module "sqs" {
@@ -76,10 +81,7 @@ module "ses" {
   team               = var.team
   environment        = var.environment
   owner              = var.owner
-  aws_region         = var.aws_region
   ses_verified_email = var.ses_verified_email
-  kms_key_arn        = module.kms.kms_key_arn
-  sqs_queue_url      = module.sqs.order_events_queue_url
 }
 
 module "dynamodb" {
