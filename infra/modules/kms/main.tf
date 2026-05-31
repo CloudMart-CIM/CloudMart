@@ -1,3 +1,6 @@
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
 locals {
   common_tags = {
     Project     = var.project_name
@@ -34,7 +37,7 @@ resource "aws_kms_key_policy" "cloudmart" {
         Sid    = "EnableRootPermissions"
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::145023091806:root"
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
         Action   = "kms:*"
         Resource = "*"
@@ -43,8 +46,8 @@ resource "aws_kms_key_policy" "cloudmart" {
         Sid    = "AllowCloudWatchLogsUseOfKey"
         Effect = "Allow"
         Principal = {
-          Service = "logs.ap-south-1.amazonaws.com"
-        },
+          Service = "logs.${data.aws_region.current.name}.amazonaws.com"
+        }
         Action = [
           "kms:DescribeKey",
           "kms:Encrypt",
@@ -52,8 +55,35 @@ resource "aws_kms_key_policy" "cloudmart" {
           "kms:ReEncrypt*",
           "kms:GenerateDataKey",
           "kms:GenerateDataKeyWithoutPlaintext"
-        ],
+        ]
         Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService"    = "logs.${data.aws_region.current.name}.amazonaws.com"
+            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
+      },
+      {
+        Sid    = "AllowEC2VolumeEncryption"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = [
+          "kms:CreateGrant",
+          "kms:Decrypt",
+          "kms:DescribeKey",
+          "kms:GenerateDataKeyWithoutPlaintext",
+          "kms:ReEncrypt*"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService"    = "ec2.${data.aws_region.current.name}.amazonaws.com"
+            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
       }
     ]
   })
