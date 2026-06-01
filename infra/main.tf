@@ -15,7 +15,7 @@ module "vpc" {
 }
 
 module "security-groups" {
-  source = "./modules/security-groups"
+  source     = "./modules/security-groups"
   depends_on = [module.vpc]
 
   allowed_ssh_cidrs = var.allowed_ssh_cidrs
@@ -48,26 +48,26 @@ module "kms" {
 }
 
 module "secrets-manager" {
-  source = "./modules/secrets-manager"
+  source     = "./modules/secrets-manager"
   depends_on = [module.kms, module.sqs, module.rds]
 
-  project_name = var.project_name
-  team         = var.team
-  environment  = var.environment
-  owner        = var.owner
-  db_host      = module.rds.user_db_endpoint
-  db_port      = module.rds.user_db_port
-  db_name      = var.db_name
-  db_username  = var.db_username
-  db_password  = var.db_password
-  kms_key_arn  = module.kms.kms_key_arn
-  aws_region   = var.aws_region
+  project_name       = var.project_name
+  team               = var.team
+  environment        = var.environment
+  owner              = var.owner
+  db_host            = module.rds.user_db_endpoint
+  db_port            = module.rds.user_db_port
+  db_name            = var.db_name
+  db_username        = var.db_username
+  db_password        = var.db_password
+  kms_key_arn        = module.kms.kms_key_arn
+  aws_region         = var.aws_region
   ses_verified_email = var.ses_verified_email
-  sqs_queue_url = module.sqs.order_events_queue_url
+  sqs_queue_url      = module.sqs.order_events_queue_url
 }
 
 module "sqs" {
-  source = "./modules/sqs"
+  source     = "./modules/sqs"
   depends_on = [module.kms]
 
   project_name = var.project_name
@@ -88,7 +88,7 @@ module "ses" {
 }
 
 module "dynamodb" {
-  source = "./modules/dynamodb"
+  source     = "./modules/dynamodb"
   depends_on = [module.kms]
 
   project_name = var.project_name
@@ -99,7 +99,7 @@ module "dynamodb" {
 }
 
 module "rds" {
-  source = "./modules/rds"
+  source     = "./modules/rds"
   depends_on = [module.vpc, module.security-groups, module.kms]
 
   project_name            = var.project_name
@@ -118,25 +118,44 @@ module "rds" {
 }
 
 module "eks" {
-  source = "./modules/eks"
+  source     = "./modules/eks"
   depends_on = [module.vpc, module.security-groups, module.kms]
 
-  project_name            = var.project_name
-  team                    = var.team
-  environment             = var.environment
-  owner                   = var.owner
+  project_name = var.project_name
+  team         = var.team
+  environment  = var.environment
+  owner        = var.owner
 
-  cluster_name            = var.cluster_name
-  eks_version             = var.eks_version
-  subnet_ids              = module.vpc.public_subnet_ids
-  private_subnet_ids      = module.vpc.private_app_subnet_ids
-  eks_security_group_id   = module.security-groups.eks_cluster_security_group_id
-  kms_key_arn             = module.kms.kms_key_arn
+  cluster_name          = var.cluster_name
+  eks_version           = var.eks_version
+  subnet_ids            = module.vpc.public_subnet_ids
+  private_subnet_ids    = module.vpc.private_app_subnet_ids
+  eks_security_group_id = module.security-groups.eks_cluster_security_group_id
+  kms_key_arn           = module.kms.kms_key_arn
 
-  eks_node_instance_types     = var.eks_node_instance_types
-  eks_node_capacity_type      = var.eks_node_capacity_type
-  eks_node_desired_size       = var.eks_node_desired_size
-  eks_node_min_size           = var.eks_node_min_size
-  eks_node_max_size           = var.eks_node_max_size
-  eks_node_disk_size          = var.eks_node_disk_size
+  eks_node_instance_types = var.eks_node_instance_types
+  eks_node_capacity_type  = var.eks_node_capacity_type
+  eks_node_desired_size   = var.eks_node_desired_size
+  eks_node_min_size       = var.eks_node_min_size
+  eks_node_max_size       = var.eks_node_max_size
+  eks_node_disk_size      = var.eks_node_disk_size
+}
+
+module "iam" {
+  source     = "./modules/iam"
+  depends_on = [module.eks, module.dynamodb, module.sqs, module.secrets-manager, module.kms]
+
+  project_name = var.project_name
+  team         = var.team
+  environment  = var.environment
+  owner        = var.owner
+
+  oidc_provider_arn           = module.eks.oidc_provider_arn
+  oidc_provider_url           = module.eks.oidc_provider_url
+  kms_key_arn                 = module.kms.kms_key_arn
+  dynamodb_products_table     = module.dynamodb.products_table_name
+  sqs_order_events_queue_arn  = module.sqs.order_events_queue_arn
+  ses_verified_email          = var.ses_verified_email
+  user_service_db_secret_arn  = module.secrets-manager.user_service_db_secret_arn
+  user_service_jwt_secret_arn = module.secrets-manager.user_service_jwt_secret_arn
 }
