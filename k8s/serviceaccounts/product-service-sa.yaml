@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: product-service-sa
+  labels:
+    app: product-service
+    component: backend
+    service: product-service
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::145023091806:role/cloudmart-product-service-role
+  namespace: cloudmart-staging
+automountServiceAccountToken: true
