@@ -26,6 +26,9 @@ data:
   SES_SENDER_EMAIL: "rinduwara0@gmail.com"
 
   # User Service
-  USER_DB_BACKEND: "postgres"         # Change to postgres
+  USER_DB_BACKEND: "postgres"
   DB_PORT: "5432"
   DB_NAME: "cloudmart_users"
+  DB_SSLMODE: "require"
+  DB_SECRET_NAME: "cloudmart/shared/user-service/db"
+  JWT_SECRET_NAME: "cloudmart/shared/user-service/jwt"
