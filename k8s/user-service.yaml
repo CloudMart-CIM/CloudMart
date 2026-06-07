@@ -21,10 +21,10 @@ spec:
         app: user-service
     spec:
       # TODO: Add serviceAccountName for workload identity
-      # serviceAccountName: user-service-sa
+      serviceAccountName: user-service-sa
       containers:
       - name: user-service
-        image: <YOUR-REGISTRY>/user-service:latest
+        image: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/user-service:latest
         ports:
         - containerPort: 8003
         env:
