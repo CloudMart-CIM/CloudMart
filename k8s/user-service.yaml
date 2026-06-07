@@ -24,6 +24,7 @@ spec:
       containers:
       - name: user-service
         image: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/user-service:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8003
         env:
