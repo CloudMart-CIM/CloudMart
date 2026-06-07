@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-user-to-rds
+  namespace: cloudmart-prod
+spec:
+  podSelector:
+    matchLabels:
+      app: user-service
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/16
+      ports:
+        - protocol: TCP
+          port: 5432
