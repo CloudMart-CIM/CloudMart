@@ -21,10 +21,10 @@ spec:
         app: product-service
     spec:
       # TODO: Add serviceAccountName for workload identity
-      # serviceAccountName: product-service-sa
+      serviceAccountName: product-service-sa
       containers:
       - name: product-service
-        image: <YOUR-REGISTRY>/product-service:latest   # Replace with your registry URI
+        image: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/product-service:latest   # Replace with your registry URI
         ports:
         - containerPort: 8001
         env:
