@@ -26,67 +26,16 @@ resource "aws_dynamodb_table" "products" {
   }
 
   attribute {
-    name = "description"
-    type = "S"
-  }
-
-  attribute {
-    name = "price"
-    type = "N"
-  }
-
-  attribute {
     name = "category"
     type = "S"
   }
 
-  attribute {
-    name = "stock"
-    type = "N"
-  }
-
-  attribute {
-    name = "imageUrl"
-    type = "S"
-  }
-
-  attribute {
-    name = "createdAt"
-    type = "S"
-  }
-
   global_secondary_index {
-    name            = "nameCategoryIndex"
+    name            = "category-name-index"
     projection_type = "ALL"
 
-    key_schema {
-      attribute_name = "name"
-      key_type       = "HASH"
-    }
-    key_schema {
-      attribute_name = "category"
-      key_type       = "HASH"
-    }
-    key_schema {
-      attribute_name = "description"
-      key_type       = "HASH"
-    }
-    key_schema {
-      attribute_name = "price"
-      key_type       = "RANGE"
-    }
-    key_schema {
-      attribute_name = "stock"
-      key_type       = "RANGE"
-    }
-    key_schema {
-      attribute_name = "imageUrl"
-      key_type       = "RANGE"
-    }
-    key_schema {
-      attribute_name = "createdAt"
-      key_type       = "RANGE"
-    }
+    hash_key  = "category"
+    range_key = "name"
   }
 
   server_side_encryption {

@@ -35,11 +35,21 @@ spec:
             configMapKeyRef:
               name: cloudmart-config
               key: NOTIFICATION_QUEUE_BACKEND
+        - name: SQS_QUEUE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: ORDER_EVENTS_QUEUE_URL
         - name: EMAIL_BACKEND
           valueFrom:
             configMapKeyRef:
               name: cloudmart-config
               key: NOTIFICATION_EMAIL_BACKEND
+        - name: FROM_EMAIL
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: SES_SENDER_EMAIL
         - name: POLL_INTERVAL_MS
           valueFrom:
             configMapKeyRef:
