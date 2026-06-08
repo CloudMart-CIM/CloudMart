@@ -20,3 +20,5 @@
    - set environment variables
    - attach service account
    - run Kubernetes Deployment
+
+* how to add environmental variables
