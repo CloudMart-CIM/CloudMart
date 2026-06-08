@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: cloudmart-prod
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - product-service
+          - order-service
+          - user-service
+
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8001
+
+        - protocol: TCP
+          port: 8002
+
+        - protocol: TCP
+          port: 8003

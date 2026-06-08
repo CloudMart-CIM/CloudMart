@@ -1,0 +1,21 @@
+1. Run locally with Docker Compose
+   - in-memory order store
+   - in-memory queue/event log
+
+2. Replace local event log with real AWS SQS
+   - add @aws-sdk/client-sqs
+   - use QUEUE_BACKEND=sqs
+   - use SQS_QUEUE_URL and AWS_REGION
+
+3. Provision cloud infrastructure with Terraform
+   - ECR
+   - EKS
+   - SQS
+   - IAM role / IRSA
+
+4. Build and push Docker image to ECR
+
+5. Deploy order-service to EKS
+   - set environment variables
+   - attach service account
+   - run Kubernetes Deployment

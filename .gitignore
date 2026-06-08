@@ -1,3 +1,35 @@
-CIM - Sample Group Assignment.pdf
-notes.txt
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+terraform.tfvars
 
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node.js
+node_modules/
+dist/
+build/
+npm-debug.log
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env/
+.pytest_cache/
+
+# Docker
+.docker/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log

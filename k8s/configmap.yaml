@@ -7,18 +7,28 @@ metadata:
   name: cloudmart-config
   namespace: cloudmart-prod
 data:
+  AWS_REGION: "ap-south-1"
+
   # Product Service
-  PRODUCT_STORE_BACKEND: "memory"   # Change to dynamodb|firestore|cosmosdb
+  PRODUCT_STORE_BACKEND: "dynamodb"   # Change to dynamodb|firestore|cosmosdb
+  PRODUCTS_TABLE_NAME: "cloudmart-products"
 
   # Order Service
   PRODUCT_SERVICE_URL: "http://product-service:8001"
-  ORDER_QUEUE_BACKEND: "memory"     # Change to sqs|pubsub|servicebus
+  ORDER_QUEUE_BACKEND: "sqs"     # Change to sqs|pubsub|servicebus
+  ORDER_EVENTS_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/145023091806/cloudmart-order-events"
 
   # Notification Service
   ORDER_SERVICE_URL: "http://order-service:8002"
-  NOTIFICATION_QUEUE_BACKEND: "memory"
-  NOTIFICATION_EMAIL_BACKEND: "console"
+  NOTIFICATION_QUEUE_BACKEND: "sqs"
+  NOTIFICATION_EMAIL_BACKEND: "ses"
   NOTIFICATION_POLL_INTERVAL: "5000"
+  SES_SENDER_EMAIL: "rinduwara0@gmail.com"
 
   # User Service
-  USER_DB_BACKEND: "memory"         # Change to postgres
+  USER_DB_BACKEND: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "cloudmart_users"
+  DB_SSLMODE: "require"
+  DB_SECRET_NAME: "cloudmart/shared/user-service/db"
+  JWT_SECRET_NAME: "cloudmart/shared/user-service/jwt"
