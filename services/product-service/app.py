@@ -71,7 +71,7 @@ class DynamoDBStore:
             return float(obj)
         return obj
 
-    def list_all(self):
+    def get_all(self, category=None, search=None):
         try:
             response = self.table.scan()
             items = response.get("Items", [])
@@ -79,12 +79,24 @@ class DynamoDBStore:
             while "LastEvaluatedKey" in response:
                 response = self.table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
                 items.extend(response.get("Items", []))
+            
+            if category:
+                items = [p for p in items if p.get("category") == category]
+            if search:
+                q = search.lower()
+                items = [
+                    p
+                    for p in items
+                    if q in str(p.get("name", "")).lower()
+                    or q in str(p.get("description", "")).lower()
+                ]
+
             return self._from_decimal(items)
         except ClientError as e:
             logger.error(f"DynamoDB scan failed: {e.response['Error']['Message']}")
             return []
 
-    def get(self, product_id):
+    def get_by_id(self, product_id):
         try:
             response = self.table.get_item(Key={"id": product_id})
             item = response.get("Item")
@@ -95,6 +107,7 @@ class DynamoDBStore:
 
     def create(self, product):
         try:
+            product['createdAt'] = datetime.utcnow().isoformat() + "Z"
             item_to_create = self._to_decimal(product.copy())
             self.table.put_item(Item=item_to_create)
             logger.info(f"Product created: {product['id']}")
@@ -122,14 +135,32 @@ class DynamoDBStore:
             logger.error(f"DynamoDB update_item failed: {e.response['Error']['Message']}")
             return None
 
-    def delete(self, product_id):
+    def check_stock(self, product_id, quantity):
+        product = self.get_by_id(product_id)
+        if not product:
+            return False
+        return int(product.get("stock", 0)) >= quantity
+
+    def decrement_stock(self, product_id, quantity):
+        from botocore.exceptions import ClientError
+
         try:
-            self.table.delete_item(Key={"id": product_id})
-            logger.info(f"Product deleted: {product_id}")
+            self.table.update_item(
+                Key={"id": product_id},
+                UpdateExpression="SET stock = stock - :qty, updatedAt = :updated_at",
+                ConditionExpression="attribute_exists(id) AND stock >= :qty",
+                ExpressionAttributeValues={
+                    ":qty": quantity,
+                    ":updated_at": datetime.utcnow().isoformat() + "Z",
+                },
+                ReturnValues="UPDATED_NEW",
+            )
             return True
         except ClientError as e:
-            logger.error(f"DynamoDB delete_item failed: {e.response['Error']['Message']}")
-            return False
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code == "ConditionalCheckFailedException":
+                return False
+            raise
 
 class InMemoryStore:
     """Simple in-memory product store for local development."""
