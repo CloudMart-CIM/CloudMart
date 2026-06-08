@@ -8,5 +8,5 @@ metadata:
     service: user-service
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::145023091806:role/cloudmart-user-service-role
-  namespace: cloudmart-staging
+  namespace: cloudmart-prod
 automountServiceAccountToken: true
