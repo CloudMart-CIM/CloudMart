@@ -6,6 +6,7 @@
    - add @aws-sdk/client-sqs
    - use QUEUE_BACKEND=sqs
    - use SQS_QUEUE_URL and AWS_REGION
+   - get aws queue url
 
 3. Provision cloud infrastructure with Terraform
    - ECR
