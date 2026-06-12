@@ -221,9 +221,35 @@ _[If your group used GitHub Copilot, ChatGPT, Claude, or any AI assistant, discl
 
 # CloudMart Deployment Guide
 
+## Pre-requisite: Generate AWS Access Keys
+ 
+Before configuring the CLI, you need to create an access key from the AWS Console.
+ 
+1. Log in to the AWS Console with your provided credentials
+2. Navigate to **IAM** (Identity and Access Management)
+3. In the left sidebar under **Access Management**, click **Users**
+4. Click on your IAM user account
+5. In the **Summary** section, click **Create access key**
+6. Select **Command Line Interface (CLI)** as the use case
+7. Click **Next**, then **Create access key**
+8. **Save your `Access Key ID` and `Secret Access Key`** — you will need these in the next step
+> **Important:** This is the only time the Secret Access Key will be shown. Copy and store it securely before closing the page.
+ 
+---
+
 ## Phase 1: Preparation
 
 ### 1. Configure AWS CLI
+Login to aws account with given credentilas 
+Navigate to IAM 
+Find IAM users under Access Management in sidebar
+Click on your user account
+In Summary section click on Create access key 
+Select Use case as 'Command Line Interface (CLI)'
+Next & create access key 
+
+
+
 Install the AWS CLI and authenticate with your new AWS account credentials:
 
 ```bash
@@ -242,7 +268,7 @@ Ensure the following tools are installed on your machine:
 - `terraform`
 - `kubectl`
 - `helm`
-- `docker`
+- `docker Desktop`
 
 ---
 
