@@ -217,3 +217,178 @@ _[If your group used GitHub Copilot, ChatGPT, Claude, or any AI assistant, discl
 ---
 
 *IS 4630 Cloud Infrastructure Management | University of Moratuwa | Academic Year 2025/2026*
+
+
+# CloudMart Deployment Guide
+
+## Phase 1: Preparation
+
+### 1. Configure AWS CLI
+Install the AWS CLI and authenticate with your new AWS account credentials:
+
+```bash
+aws configure
+```
+
+Verify the configuration:
+
+```bash
+aws sts get-caller-identity
+```
+
+### 2. Install Prerequisites
+Ensure the following tools are installed on your machine:
+
+- `terraform`
+- `kubectl`
+- `helm`
+- `docker`
+
+---
+
+## Phase 2: Bootstrap Infrastructure
+
+### 1. Deploy Terraform Backend
+
+```bash
+cd infra/backend/
+terraform init
+terraform plan
+terraform apply
+```
+
+### 2. Configure Main Terraform Backend Context
+
+Update the backend configuration as required for your environment.
+
+### 3. Deploy Main Infrastructure
+
+```bash
+cd ../   # You should now be in the infra/ directory
+```
+
+Review `terraform.tfvars` and update any environment variables, SSH key names, or domains if necessary. Ensure `aws_region` is set correctly.
+
+Run the deployment:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+> **Note:** This step provisions your VPC, ECR repositories, EKS cluster, RDS, DynamoDB, SQS, SES, and other required services.
+
+---
+
+## Phase 3: Setup EKS Cluster & ALB Controller
+
+### 1. Update Kubeconfig
+
+Connect `kubectl` to your newly created EKS cluster:
+
+```bash
+aws eks update-kubeconfig --region <your-region> --name <your-cluster-name>
+```
+
+### 2. Deploy ALB Identity/Roles
+
+```bash
+cd infra/alb/
+terraform init
+terraform apply
+```
+
+> This generates the IAM Roles and Trust Policies required for the AWS Load Balancer Controller to operate.
+
+### 3. Install the AWS Load Balancer Controller
+
+Deploy the AWS Load Balancer Controller via Helm to your EKS cluster using the Service Account and IAM Role generated in the previous step.
+
+---
+
+## Phase 4: Build and Push Docker Images
+
+### 1. Authenticate Docker with ECR
+
+```bash
+aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin <new-account-id>.dkr.ecr.<your-region>.amazonaws.com
+```
+
+### 2. Build & Push Each Service
+
+Repeat the following steps for each service: `frontend`, `notification-service`, `order-service`, `product-service`, and `user-service`.
+
+```bash
+cd services/<service-name>
+
+# Build the image
+docker build -t cloudmart-<service-name> .
+
+# Tag the image with your new ECR URI
+docker tag cloudmart-<service-name>:latest <new-account-id>.dkr.ecr.<your-region>.amazonaws.com/cloudmart-<service-name>:latest
+
+# Push the image
+docker push <new-account-id>.dkr.ecr.<your-region>.amazonaws.com/cloudmart-<service-name>:latest
+```
+
+---
+
+## Phase 5: Update & Apply Kubernetes Manifests
+
+### 1. Update Manifest Image URIs
+
+Go through the files in the `deployments/` directory (e.g., `frontend.yaml`) and replace the old AWS account ID/Region in the `image:` fields with your new account's ECR URIs.
+
+### 2. Update Environment Configurations
+
+Open `configmap.yaml` and update all AWS endpoints:
+
+- Replace old **RDS Database endpoints**
+- Replace old **DynamoDB table ARNs**
+- Replace old **SQS Queue URLs**
+
+with the new ones provisioned in Phase 2. You can retrieve these with:
+
+```bash
+terraform output   # Run from the infra/ directory
+```
+
+### 3. Deploy to EKS
+
+```bash
+kubectl apply -f k8s/namespaces/
+kubectl apply -f k8s/serviceaccounts/
+kubectl apply -f k8s/configmaps/
+kubectl apply -f k8s/network-policies/
+kubectl apply -f k8s/deployments/
+```
+
+---
+
+## Phase 6: Verification
+
+### 1. Verify Pods Are Running
+
+```bash
+kubectl get pods -A
+```
+
+### 2. Get the ALB Endpoint
+
+Retrieve the Application Load Balancer endpoint created by the Ingress:
+
+```bash
+kubectl get ingress -n <your-namespace>
+```
+
+---
+
+## Destroy All Resources
+
+To tear down all provisioned infrastructure:
+
+```bash
+terraform destroy -auto-approve
+```
+
