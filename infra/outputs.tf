@@ -178,3 +178,8 @@ output "eks_cluster_role_arn" {
   description = "EKS cluster IAM role ARN"
   value       = module.eks.eks_cluster_role_arn
 }
+
+output "alb_controller_role_arn" {
+  description = "IAM role ARN for AWS Load Balancer Controller"
+  value       = module.alb.alb_controller_role_arn
+}
