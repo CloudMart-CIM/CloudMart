@@ -11,15 +11,18 @@ Data Store:
 import os
 import uuid
 import logging
+from decimal import Decimal
 from datetime import datetime
 from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
+import boto3
+from botocore.exceptions import ClientError
 
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])
+CORS(app, origins=["http://localhost:3000", "http://localhost:80"]) # Allow frontend
 app.config["JSON_SORT_KEYS"] = False
 
 logging.basicConfig(
@@ -32,70 +35,132 @@ logger = logging.getLogger("product-service")
 # Data store abstraction
 # ---------------------------------------------------------------------------
 
-# Seed data
-SEED_PRODUCTS = [
-    {
-        "id": "prod-001",
-        "name": "Wireless Bluetooth Headphones",
-        "description": "Premium noise-cancelling over-ear headphones with 30-hour battery life",
-        "price": 79.99,
-        "category": "electronics",
-        "stock": 150,
-        "imageUrl": "/images/headphones.jpg",
-        "createdAt": "2025-01-15T10:00:00Z",
-    },
-    {
-        "id": "prod-002",
-        "name": "Organic Ceylon Tea (100 bags)",
-        "description": "Premium hand-picked Ceylon black tea from Nuwara Eliya estates",
-        "price": 12.99,
-        "category": "food",
-        "stock": 500,
-        "imageUrl": "/images/ceylon-tea.jpg",
-        "createdAt": "2025-01-15T10:00:00Z",
-    },
-    {
-        "id": "prod-003",
-        "name": "USB-C Laptop Stand",
-        "description": "Adjustable aluminium stand with integrated USB-C hub (HDMI, USB 3.0, PD charging)",
-        "price": 49.99,
-        "category": "electronics",
-        "stock": 75,
-        "imageUrl": "/images/laptop-stand.jpg",
-        "createdAt": "2025-01-15T10:00:00Z",
-    },
-    {
-        "id": "prod-004",
-        "name": "Handloom Cotton Sarong",
-        "description": "Traditional Sri Lankan handloom sarong, 100% cotton, machine washable",
-        "price": 24.99,
-        "category": "clothing",
-        "stock": 200,
-        "imageUrl": "/images/sarong.jpg",
-        "createdAt": "2025-01-15T10:00:00Z",
-    },
-    {
-        "id": "prod-005",
-        "name": "Mechanical Keyboard (TKL)",
-        "description": "Tenkeyless mechanical keyboard with Cherry MX Brown switches, RGB backlight",
-        "price": 89.99,
-        "category": "electronics",
-        "stock": 60,
-        "imageUrl": "/images/keyboard.jpg",
-        "createdAt": "2025-01-15T10:00:00Z",
-    },
-    {
-        "id": "prod-006",
-        "name": "Coconut Oil (Cold Pressed, 500ml)",
-        "description": "Virgin cold-pressed coconut oil from Southern Province, Sri Lanka",
-        "price": 8.99,
-        "category": "food",
-        "stock": 300,
-        "imageUrl": "/images/coconut-oil.jpg",
-        "createdAt": "2025-01-15T10:00:00Z",
-    },
-]
+class DynamoDBStore:
+    def __init__(self):
+        self.table_name = os.environ.get("DYNAMODB_PRODUCTS_TABLE")
+        if not self.table_name:
+            raise ValueError("DYNAMODB_PRODUCTS_TABLE environment variable not set")
 
+        self.dynamodb = boto3.resource("dynamodb")
+        self.table = self.dynamodb.Table(self.table_name)
+        logger.info(f"Initialized DynamoDB store for table: {self.table_name}")
+
+    def _to_decimal(self, obj):
+        if isinstance(obj, list):
+            for i in range(len(obj)):
+                obj[i] = self._to_decimal(obj[i])
+            return obj
+        elif isinstance(obj, dict):
+            for k, v in obj.items():
+                obj[k] = self._to_decimal(v)
+            return obj
+        elif isinstance(obj, float):
+            return Decimal(str(obj))
+        return obj
+
+    def _from_decimal(self, obj):
+        if isinstance(obj, list):
+            for i in range(len(obj)):
+                obj[i] = self._from_decimal(obj[i])
+            return obj
+        elif isinstance(obj, dict):
+            for k, v in obj.items():
+                obj[k] = self._from_decimal(v)
+            return obj
+        elif isinstance(obj, Decimal):
+            return float(obj)
+        return obj
+
+    def get_all(self, category=None, search=None):
+        try:
+            response = self.table.scan()
+            items = response.get("Items", [])
+            # Handle pagination if necessary
+            while "LastEvaluatedKey" in response:
+                response = self.table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
+                items.extend(response.get("Items", []))
+            
+            if category:
+                items = [p for p in items if p.get("category") == category]
+            if search:
+                q = search.lower()
+                items = [
+                    p
+                    for p in items
+                    if q in str(p.get("name", "")).lower()
+                    or q in str(p.get("description", "")).lower()
+                ]
+
+            return self._from_decimal(items)
+        except ClientError as e:
+            logger.error(f"DynamoDB scan failed: {e.response['Error']['Message']}")
+            return []
+
+    def get_by_id(self, product_id):
+        try:
+            response = self.table.get_item(Key={"id": product_id})
+            item = response.get("Item")
+            return self._from_decimal(item) if item else None
+        except ClientError as e:
+            logger.error(f"DynamoDB get_item failed: {e.response['Error']['Message']}")
+            return None
+
+    def create(self, product):
+        try:
+            product['createdAt'] = datetime.utcnow().isoformat() + "Z"
+            item_to_create = self._to_decimal(product.copy())
+            self.table.put_item(Item=item_to_create)
+            logger.info(f"Product created: {product['id']}")
+            return product
+        except ClientError as e:
+            logger.error(f"DynamoDB put_item failed: {e.response['Error']['Message']}")
+            return None
+
+    def update(self, product_id, updates):
+        try:
+            update_expression = "SET " + ", ".join(f"#{k}=:{k}" for k in updates)
+            expression_attribute_names = {f"#{k}": k for k in updates}
+            expression_attribute_values = self._to_decimal({f":{k}": v for k, v in updates.items()})
+
+            response = self.table.update_item(
+                Key={"id": product_id},
+                UpdateExpression=update_expression,
+                ExpressionAttributeNames=expression_attribute_names,
+                ExpressionAttributeValues=expression_attribute_values,
+                ReturnValues="ALL_NEW",
+            )
+            logger.info(f"Product updated: {product_id}")
+            return self._from_decimal(response["Attributes"])
+        except ClientError as e:
+            logger.error(f"DynamoDB update_item failed: {e.response['Error']['Message']}")
+            return None
+
+    def check_stock(self, product_id, quantity):
+        product = self.get_by_id(product_id)
+        if not product:
+            return False
+        return int(product.get("stock", 0)) >= quantity
+
+    def decrement_stock(self, product_id, quantity):
+        from botocore.exceptions import ClientError
+
+        try:
+            self.table.update_item(
+                Key={"id": product_id},
+                UpdateExpression="SET stock = stock - :qty, updatedAt = :updated_at",
+                ConditionExpression="attribute_exists(id) AND stock >= :qty",
+                ExpressionAttributeValues={
+                    ":qty": quantity,
+                    ":updated_at": datetime.utcnow().isoformat() + "Z",
+                },
+                ReturnValues="UPDATED_NEW",
+            )
+            return True
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code == "ConditionalCheckFailedException":
+                return False
+            raise
 
 class InMemoryStore:
     """Simple in-memory product store for local development."""
@@ -165,73 +230,15 @@ class InMemoryStore:
 # Cloud store adapters (students implement these for the assignment)
 # ---------------------------------------------------------------------------
 
-class DynamoDBStore:
-    """
-    AWS DynamoDB adapter.
+# Use DynamoDB if the environment variable is set, otherwise fall back to in-memory
+store_backend = os.environ.get("STORE_BACKEND")
+if store_backend == "dynamodb":
+    logger.info("Using DynamoDB store backend")
+    store = DynamoDBStore()
+else:
+    logger.info("Using in-memory store backend (default)")
+    store = InMemoryStore()
 
-    To use: set STORE_BACKEND=dynamodb and DYNAMODB_TABLE=<table-name>
-
-    Students: implement each method using boto3.
-    Requires IRSA / workload identity for credentials.
-    """
-
-    def __init__(self):
-        # TODO: import boto3; create dynamodb resource
-        # self.table = boto3.resource('dynamodb').Table(os.environ['DYNAMODB_TABLE'])
-        raise NotImplementedError(
-            "DynamoDB store not implemented yet. "
-            "See the assignment brief Section 3.3 for guidance."
-        )
-
-
-class FirestoreStore:
-    """
-    GCP Firestore adapter.
-
-    To use: set STORE_BACKEND=firestore and FIRESTORE_COLLECTION=<collection-name>
-
-    Students: implement each method using google-cloud-firestore.
-    Requires GCP Workload Identity for credentials.
-    """
-
-    def __init__(self):
-        raise NotImplementedError(
-            "Firestore store not implemented yet. "
-            "See the assignment brief Section 3.3 for guidance."
-        )
-
-
-class CosmosDBStore:
-    """
-    Azure Cosmos DB adapter.
-
-    To use: set STORE_BACKEND=cosmosdb and COSMOSDB_ENDPOINT / COSMOSDB_KEY
-
-    Students: implement each method using azure-cosmos.
-    Requires Azure Workload Identity for credentials.
-    """
-
-    def __init__(self):
-        raise NotImplementedError(
-            "Cosmos DB store not implemented yet. "
-            "See the assignment brief Section 3.3 for guidance."
-        )
-
-
-def create_store():
-    backend = os.environ.get("STORE_BACKEND", "memory").lower()
-    if backend == "dynamodb":
-        return DynamoDBStore()
-    elif backend == "firestore":
-        return FirestoreStore()
-    elif backend == "cosmosdb":
-        return CosmosDBStore()
-    else:
-        logger.info("Using in-memory product store (set STORE_BACKEND to use cloud DB)")
-        return InMemoryStore()
-
-
-store = create_store()
 
 # ---------------------------------------------------------------------------
 # Routes
