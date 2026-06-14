@@ -30,11 +30,21 @@ spec:
         env:
         - name: PORT
           value: "8001"
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: AWS_REGION
         - name: STORE_BACKEND
           valueFrom:
             configMapKeyRef:
               name: cloudmart-config
               key: PRODUCT_STORE_BACKEND
+        - name: DYNAMODB_PRODUCTS_TABLE
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: PRODUCTS_TABLE_NAME
         resources:
           requests:
             cpu: 100m
@@ -54,6 +64,13 @@ spec:
             port: 8001
           initialDelaySeconds: 10
           periodSeconds: 30
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: "topology.kubernetes.io/zone"
+        whenUnsatisfiable: "ScheduleAnyway"
+        labelSelector:
+          matchLabels:
+            app: product-service
 ---
 apiVersion: v1
 kind: Service
@@ -87,3 +104,9 @@ spec:
       target:
         type: Utilization
         averageUtilization: 60
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

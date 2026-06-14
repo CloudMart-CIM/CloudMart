@@ -99,6 +99,68 @@ curl -X POST http://localhost:8002/orders \
 curl http://localhost:8004/notifications
 ```
 
+## AWS Only: Product-Service Test (Terraform)
+
+Use this path to provision only DynamoDB + KMS for `product-service` and skip the full platform.
+
+### 1) Authenticate AWS CLI
+
+```bash
+aws configure
+aws sts get-caller-identity
+```
+
+### 2) Deploy minimal Terraform stack
+
+```bash
+cd infra/product-service-test
+cp terraform.tfvars.example terraform.tfvars
+# edit terraform.tfvars and set owner to your email
+
+terraform init
+terraform plan
+terraform apply -auto-approve
+```
+
+Get the table name from output:
+
+```bash
+terraform output products_table_name
+```
+
+### 3) Run only product-service with DynamoDB
+
+```bash
+cd ../../services/product-service
+docker build -t cloudmart-product-service .
+
+docker run --rm -p 8001:8001 \
+  -e PORT=8001 \
+  -e STORE_BACKEND=dynamodb \
+  -e AWS_REGION=ap-south-1 \
+  -e DYNAMODB_TABLE=<terraform_output_table_name> \
+  -v ~/.aws:/home/app/.aws:ro \
+  cloudmart-product-service
+```
+
+### 4) Verify API
+
+```bash
+curl http://localhost:8001/health
+curl http://localhost:8001/products
+
+curl -X POST http://localhost:8001/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"AWS Test Product","price":10.5,"category":"test","stock":5}'
+```
+
+### 5) Destroy test resources
+
+```bash
+cd ../../infra/product-service-test
+terraform destroy -auto-approve
+```
+
 ## Cloud Adapter Pattern
 
 All services use an **adapter pattern** for cloud backends. By default, they run with in-memory data stores (no cloud credentials needed). To connect to cloud-managed services, set the appropriate environment variables:
