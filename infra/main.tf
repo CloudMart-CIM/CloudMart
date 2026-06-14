@@ -173,3 +173,13 @@ module "iam" {
   user_service_db_secret_arn  = module.secrets-manager.user_service_db_secret_arn
   user_service_jwt_secret_arn = module.secrets-manager.user_service_jwt_secret_arn
 }
+
+resource "aws_vpc_security_group_ingress_rule" "rds_from_eks_cluster_sg" {
+  security_group_id = module.security-groups.rds_security_group_id
+
+  description                  = "Allow EKS-managed cluster security group to access PostgreSQL"
+  referenced_security_group_id = module.eks.eks_cluster_security_group_id
+  from_port                    = 5432
+  to_port                      = 5432
+  ip_protocol                  = "tcp"
+}
