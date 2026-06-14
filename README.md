@@ -218,7 +218,6 @@ _[If your group used GitHub Copilot, ChatGPT, Claude, or any AI assistant, discl
 
 *IS 4630 Cloud Infrastructure Management | University of Moratuwa | Academic Year 2025/2026*
 
-
 # CloudMart Deployment Guide
 
 ## Pre-requisite: Generate AWS Access Keys
@@ -417,4 +416,3 @@ To tear down all provisioned infrastructure:
 ```bash
 terraform destroy -auto-approve
 ```
-
