@@ -141,6 +141,20 @@ module "eks" {
   eks_node_disk_size      = var.eks_node_disk_size
 }
 
+module "alb" {
+  source     = "./modules/alb"
+  depends_on = [module.vpc, module.security-groups, module.eks]
+
+  project_name = var.project_name
+  team         = var.team
+  environment  = var.environment
+  owner        = var.owner
+  cluster_name  = var.cluster_name
+
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+}
+
 module "iam" {
   source     = "./modules/iam"
   depends_on = [module.eks, module.dynamodb, module.sqs, module.secrets-manager, module.kms]
@@ -158,4 +172,14 @@ module "iam" {
   ses_verified_email          = var.ses_verified_email
   user_service_db_secret_arn  = module.secrets-manager.user_service_db_secret_arn
   user_service_jwt_secret_arn = module.secrets-manager.user_service_jwt_secret_arn
+}
+
+resource "aws_vpc_security_group_ingress_rule" "rds_from_eks_cluster_sg" {
+  security_group_id = module.security-groups.rds_security_group_id
+
+  description                  = "Allow EKS-managed cluster security group to access PostgreSQL"
+  referenced_security_group_id = module.eks.eks_cluster_security_group_id
+  from_port                    = 5432
+  to_port                      = 5432
+  ip_protocol                  = "tcp"
 }

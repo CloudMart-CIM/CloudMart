@@ -20,26 +20,51 @@ spec:
       labels:
         app: user-service
     spec:
-      # TODO: Add serviceAccountName for workload identity
       serviceAccountName: user-service-sa
       containers:
       - name: user-service
         image: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/user-service:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8003
         env:
         - name: PORT
           value: "8003"
+        - name: AWS_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: AWS_REGION
         - name: DB_BACKEND
           valueFrom:
             configMapKeyRef:
               name: cloudmart-config
               key: USER_DB_BACKEND
-        - name: JWT_SECRET
+        - name: DB_PORT
           valueFrom:
-            secretKeyRef:
-              name: cloudmart-secrets
-              key: JWT_SECRET
+            configMapKeyRef:
+              name: cloudmart-config
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: DB_NAME
+        - name: DB_SSLMODE
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: DB_SSLMODE
+        - name: DB_SECRET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: DB_SECRET_NAME
+        - name: JWT_SECRET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: JWT_SECRET_NAME
         resources:
           requests:
             cpu: 100m
