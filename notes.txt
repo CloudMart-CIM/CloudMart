@@ -232,3 +232,101 @@ and test directories
 communication) 
 ● [D] Container image vulnerability scan using Trivy (or provider-native scanner) in CI; 
 pipeline fails on CRITICAL findings
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          severity: CRITICAL
+          vuln-type: os,library
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+
+-----------------------------------------------------------------------------------------------------------------------
+
+● [M] All five services deployed as Kubernetes Deployments with: 
+○ Minimum 2 replicas for production services (product, order, user, frontend) 
+spec:
+  replicas: 2
+
+○ Resource requests and limits defined for every container 
+
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+            
+○ liveness and readiness probes configured
+readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 10
+          periodSeconds: 30 
+○ Rolling update strategy with maxSurge: 1, maxUnavailable: 0 
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+● [M] Kubernetes Services: ClusterIP for backend services; Ingress for frontend via cloud 
+load balancer (using provider's Ingress controller) 
+● [M] Ingress resource configured with appropriate annotations for your provider's load 
+balancer controller 
+
+kind: Ingress
+metadata:
+  name: cloudmart-ingress
+  namespace: cloudmart-prod
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+
+● [M] Horizontal Pod Autoscaler (HPA) for product-service and order-service targeting 
+60% CPU utilisation 
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: order-service-hpa
+  namespace: cloudmart-prod
+● [M] Namespaces: cloudmart-prod (production), cloudmart-staging (staging) 
+metadata:
+  name: order-service-hpa
+  namespace: cloudmart-prod
+● [M] ConfigMaps for non-sensitive configuration (database hostnames, queue URLs, 
+feature flags) 
+metadata:
+  name: cloudmart-config
+  namespace: cloudmart-prod
+data:
+  AWS_REGION: "ap-south-1"
+
+  # Product Service
+  PRODUCT_STORE_BACKEND: "dynamodb"   # Change to dynamodb|firestore|cosmosdb
+  PRODUCTS_TABLE_NAME: "cloudmart-products"
+
+  # Order Service
+  PRODUCT_SERVICE_URL: "http://product-service:8001"
+  ORDER_QUEUE_BACKEND: "sqs"     # Change to sqs|pubsub|servicebus
+  ORDER_EVENTS_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/145023091806/cloudmart-order-events"
+● [M] Kubernetes Secrets for sensitive values (injected from secret management service 
+via Secrets Store CSI Driver or External Secrets Operator) 
+● [R] Pod Disruption Budget (PDB) for each production deployment ensuring minimum 1 
+replica available 
+● [R] Cluster autoscaler (or equivalent) deployed and demonstrated scaling out under load 
+● [D] Event-driven autoscaler (e.g. KEDA) scaling notification-service based on message 
+queue depth
