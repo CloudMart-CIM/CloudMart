@@ -35,6 +35,11 @@ spec:
             configMapKeyRef:
               name: cloudmart-config
               key: AWS_REGION
+        - name: AWS_DEFAULT_REGION
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: AWS_REGION
         - name: DB_BACKEND
           valueFrom:
             configMapKeyRef:
@@ -55,6 +60,16 @@ spec:
             configMapKeyRef:
               name: cloudmart-config
               key: DB_SSLMODE
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cloudmart-secrets
+              key: DB_PASSWORD
         - name: DB_SECRET_NAME
           valueFrom:
             configMapKeyRef:
