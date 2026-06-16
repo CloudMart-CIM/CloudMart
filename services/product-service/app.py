@@ -18,6 +18,70 @@ from flask_cors import CORS
 import boto3
 from botocore.exceptions import ClientError
 
+# Seed data
+SEED_PRODUCTS = [
+    {
+        "id": "prod-001",
+        "name": "Wireless Bluetooth Headphones",
+        "description": "Premium noise-cancelling over-ear headphones with 30-hour battery life",
+        "price": 79.99,
+        "category": "electronics",
+        "stock": 150,
+        "imageUrl": "/images/headphones.jpg",
+        "createdAt": "2025-01-15T10:00:00Z",
+    },
+    {
+        "id": "prod-002",
+        "name": "Organic Ceylon Tea (100 bags)",
+        "description": "Premium hand-picked Ceylon black tea from Nuwara Eliya estates",
+        "price": 12.99,
+        "category": "food",
+        "stock": 500,
+        "imageUrl": "/images/ceylon-tea.jpg",
+        "createdAt": "2025-01-15T10:00:00Z",
+    },
+    {
+        "id": "prod-003",
+        "name": "USB-C Laptop Stand",
+        "description": "Adjustable aluminium stand with integrated USB-C hub (HDMI, USB 3.0, PD charging)",
+        "price": 49.99,
+        "category": "electronics",
+        "stock": 75,
+        "imageUrl": "/images/laptop-stand.jpg",
+        "createdAt": "2025-01-15T10:00:00Z",
+    },
+    {
+        "id": "prod-004",
+        "name": "Handloom Cotton Sarong",
+        "description": "Traditional Sri Lankan handloom sarong, 100% cotton, machine washable",
+        "price": 24.99,
+        "category": "clothing",
+        "stock": 200,
+        "imageUrl": "/images/sarong.jpg",
+        "createdAt": "2025-01-15T10:00:00Z",
+    },
+    {
+        "id": "prod-005",
+        "name": "Mechanical Keyboard (TKL)",
+        "description": "Tenkeyless mechanical keyboard with Cherry MX Brown switches, RGB backlight",
+        "price": 89.99,
+        "category": "electronics",
+        "stock": 60,
+        "imageUrl": "/images/keyboard.jpg",
+        "createdAt": "2025-01-15T10:00:00Z",
+    },
+    {
+        "id": "prod-006",
+        "name": "Coconut Oil (Cold Pressed, 500ml)",
+        "description": "Virgin cold-pressed coconut oil from Southern Province, Sri Lanka",
+        "price": 8.99,
+        "category": "food",
+        "stock": 300,
+        "imageUrl": "/images/coconut-oil.jpg",
+        "createdAt": "2025-01-15T10:00:00Z",
+    },
+]
+
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
@@ -43,7 +107,18 @@ class DynamoDBStore:
 
         self.dynamodb = boto3.resource("dynamodb")
         self.table = self.dynamodb.Table(self.table_name)
+        self.migrate_to_dynamodb()
         logger.info(f"Initialized DynamoDB store for table: {self.table_name}")
+
+    def migrate_to_dynamodb(self):
+        table = self.dynamodb.Table(self.table_name)
+
+        with table.batch_writer() as batch:
+            for product in SEED_PRODUCTS:
+                # Convert floats to Decimals
+                product['price'] = Decimal(str(product['price']))
+                batch.put_item(Item=product)
+        print(f"Successfully migrated {len(SEED_PRODUCTS)} products to {self.table_name}")
 
     def _to_decimal(self, obj):
         if isinstance(obj, list):
@@ -162,68 +237,68 @@ class DynamoDBStore:
                 return False
             raise
 
-class InMemoryStore:
-    """Simple in-memory product store for local development."""
+# class InMemoryStore:
+#     """Simple in-memory product store for local development."""
 
-    def __init__(self):
-        self.products = {p["id"]: dict(p) for p in SEED_PRODUCTS}
+#     def __init__(self):
+#         self.products = {p["id"]: dict(p) for p in SEED_PRODUCTS}
 
-    def get_all(self, category=None, search=None):
-        results = list(self.products.values())
-        if category:
-            results = [p for p in results if p["category"] == category]
-        if search:
-            q = search.lower()
-            results = [
-                p
-                for p in results
-                if q in p["name"].lower() or q in p["description"].lower()
-            ]
-        return results
+#     def get_all(self, category=None, search=None):
+#         results = list(self.products.values())
+#         if category:
+#             results = [p for p in results if p["category"] == category]
+#         if search:
+#             q = search.lower()
+#             results = [
+#                 p
+#                 for p in results
+#                 if q in p["name"].lower() or q in p["description"].lower()
+#             ]
+#         return results
 
-    def get_by_id(self, product_id):
-        return self.products.get(product_id)
+#     def get_by_id(self, product_id):
+#         return self.products.get(product_id)
 
-    def create(self, data):
-        product_id = f"prod-{uuid.uuid4().hex[:6]}"
-        product = {
-            "id": product_id,
-            "name": data["name"],
-            "description": data.get("description", ""),
-            "price": float(data["price"]),
-            "category": data.get("category", "general"),
-            "stock": int(data.get("stock", 0)),
-            "imageUrl": data.get("imageUrl", ""),
-            "createdAt": datetime.utcnow().isoformat() + "Z",
-        }
-        self.products[product_id] = product
-        return product
+#     def create(self, data):
+#         product_id = f"prod-{uuid.uuid4().hex[:6]}"
+#         product = {
+#             "id": product_id,
+#             "name": data["name"],
+#             "description": data.get("description", ""),
+#             "price": float(data["price"]),
+#             "category": data.get("category", "general"),
+#             "stock": int(data.get("stock", 0)),
+#             "imageUrl": data.get("imageUrl", ""),
+#             "createdAt": datetime.utcnow().isoformat() + "Z",
+#         }
+#         self.products[product_id] = product
+#         return product
 
-    def update(self, product_id, data):
-        if product_id not in self.products:
-            return None
-        product = self.products[product_id]
-        for key in ["name", "description", "price", "category", "stock", "imageUrl"]:
-            if key in data:
-                product[key] = data[key]
-        product["updatedAt"] = datetime.utcnow().isoformat() + "Z"
-        return product
+#     def update(self, product_id, data):
+#         if product_id not in self.products:
+#             return None
+#         product = self.products[product_id]
+#         for key in ["name", "description", "price", "category", "stock", "imageUrl"]:
+#             if key in data:
+#                 product[key] = data[key]
+#         product["updatedAt"] = datetime.utcnow().isoformat() + "Z"
+#         return product
 
-    def delete(self, product_id):
-        return self.products.pop(product_id, None) is not None
+#     def delete(self, product_id):
+#         return self.products.pop(product_id, None) is not None
 
-    def check_stock(self, product_id, quantity):
-        product = self.products.get(product_id)
-        if not product:
-            return False
-        return product["stock"] >= quantity
+#     def check_stock(self, product_id, quantity):
+#         product = self.products.get(product_id)
+#         if not product:
+#             return False
+#         return product["stock"] >= quantity
 
-    def decrement_stock(self, product_id, quantity):
-        product = self.products.get(product_id)
-        if product and product["stock"] >= quantity:
-            product["stock"] -= quantity
-            return True
-        return False
+#     def decrement_stock(self, product_id, quantity):
+#         product = self.products.get(product_id)
+#         if product and product["stock"] >= quantity:
+#             product["stock"] -= quantity
+#             return True
+#         return False
 
 
 # ---------------------------------------------------------------------------
