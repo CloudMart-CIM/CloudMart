@@ -1,5 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../../base
-namespace: cloudmart-staging # Forces ALL resources from base into staging namespace
+- ../../base
+namespace: cloudmart-staging
+images:
+- name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/frontend
+  newName: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/frontend
+  newTag: 10d45b4ec0eece5bd2c42578b28c75c994857044
