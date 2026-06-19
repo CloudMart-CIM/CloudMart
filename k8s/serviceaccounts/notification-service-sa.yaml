@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: notification-service-sa
+  namespace: cloudmart-prod
+  labels:
+    app: notification-service
+    component: backend
+    service: notification-service
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::145023091806:role/cloudmart-notification-service-role
+automountServiceAccountToken: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: notification-service-sa
+  namespace: cloudmart-staging
+  labels:
+    app: notification-service
+    component: backend
+    service: notification-service
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::145023091806:role/cloudmart-notification-service-role
+automountServiceAccountToken: true

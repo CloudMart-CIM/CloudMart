@@ -1,0 +1,36 @@
+# ConfigMap for non-sensitive configuration
+# Sensitive values (DB passwords, JWT secrets) should go in Kubernetes Secrets
+# injected from your cloud provider's secret management service.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudmart-config
+  namespace: cloudmart-prod
+data:
+  AWS_REGION: "ap-south-1"
+
+  # Product Service
+  PRODUCT_STORE_BACKEND: "dynamodb"
+  PRODUCTS_TABLE_NAME: "cloudmart-products"
+
+  # Order Service
+  PRODUCT_SERVICE_URL: "http://product-service:8001"
+  ORDER_QUEUE_BACKEND: "sqs"
+  ORDER_EVENTS_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/145023091806/cloudmart-order-events"
+
+  # Notification Service
+  ORDER_SERVICE_URL: "http://order-service:8002"
+  NOTIFICATION_QUEUE_BACKEND: "sqs"
+  NOTIFICATION_EMAIL_BACKEND: "ses"
+  NOTIFICATION_POLL_INTERVAL: "5000"
+  SES_SENDER_EMAIL: "rinduwara0@gmail.com"
+
+  # User Service
+  USER_DB_BACKEND: "postgres"
+  DB_HOST: "cloudmart-user-db.cjc6cqeq0ser.ap-south-1.rds.amazonaws.com"
+  DB_PORT: "5432"
+  DB_NAME: "cloudmart_userr-db"
+  DB_USER: "cloudmartadmin"
+  DB_SSLMODE: "require"
+  DB_SECRET_NAME: "cloudmart/prod/user-service/db"
+  JWT_SECRET_NAME: "cloudmart/prod/user-service/jwt"

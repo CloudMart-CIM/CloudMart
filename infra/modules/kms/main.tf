@@ -57,12 +57,6 @@ resource "aws_kms_key_policy" "cloudmart" {
           "kms:GenerateDataKeyWithoutPlaintext"
         ]
         Resource = "*"
-        Condition = {
-          StringEquals = {
-            "kms:ViaService"    = "logs.${data.aws_region.current.name}.amazonaws.com"
-            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
-          }
-        }
       },
       {
         Sid    = "AllowEC2VolumeEncryption"
@@ -78,12 +72,6 @@ resource "aws_kms_key_policy" "cloudmart" {
           "kms:ReEncrypt*"
         ]
         Resource = "*"
-        Condition = {
-          StringEquals = {
-            "kms:ViaService"    = "ec2.${data.aws_region.current.name}.amazonaws.com"
-            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
-          }
-        }
       }
     ]
   })

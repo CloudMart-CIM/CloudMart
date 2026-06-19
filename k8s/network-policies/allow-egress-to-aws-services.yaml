@@ -1,0 +1,29 @@
+# This allows
+# product-service      -> DynamoDB
+# order-service        -> SQS
+# notification-service -> SQS + SES
+# user-service         -> Secrets Manager
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-to-aws-services
+  namespace: cloudmart-prod
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - product-service
+          - order-service
+          - notification-service
+          - user-service
+
+  policyTypes:
+    - Egress
+
+  egress:
+    - ports:
+        - protocol: TCP
+          port: 443

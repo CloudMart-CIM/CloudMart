@@ -11,7 +11,7 @@ COPY src/ ./src/
 RUN npm run build
 
 # ---- Stage 2: Serve with Nginx ----
-FROM nginx:1.27-alpine
+FROM nginx:1.30-alpine
 
 # Remove default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
