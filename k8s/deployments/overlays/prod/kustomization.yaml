@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Pull all services from the base layout together 📦
+resources:
+  - ../../base
+
+# Enforce the staging namespace across all compiled resources
+namespace: cloudmart-prod
+
+# Define the image tag substitutions for your services
+images:
+  - name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/frontend
+    newName: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/frontend
+    newTag: latest
+  - name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/notification-service
+    newName: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/notification-service
+    newTag: latest
+  - name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/order-service
+    newName: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/order-service
+    newTag: latest
+  - name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/product-service
+    newName: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/product-service
+    newTag: latest
+  - name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/user-service
+    newName: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/user-service
+    newTag: latest

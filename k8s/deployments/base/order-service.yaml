@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-service
-  namespace: cloudmart-prod
   labels:
     app: order-service
 spec:
@@ -64,7 +63,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: order-service
-  namespace: cloudmart-prod
 spec:
   selector:
     app: order-service
@@ -77,7 +75,6 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: order-service-hpa
-  namespace: cloudmart-prod
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
