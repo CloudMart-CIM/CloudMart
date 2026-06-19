@@ -37,9 +37,9 @@ spec:
               key: NOTIFICATION_QUEUE_BACKEND
         - name: SQS_QUEUE_URL
           valueFrom:
-            configMapKeyRef:
-              name: cloudmart-config
-              key: ORDER_EVENTS_QUEUE_URL
+            secretKeyRef:
+              name: notification-service-secret
+              key: SQS_QUEUE_URL
         - name: EMAIL_BACKEND
           valueFrom:
             configMapKeyRef:
