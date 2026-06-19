@@ -141,6 +141,20 @@ module "eks" {
   eks_node_disk_size      = var.eks_node_disk_size
 }
 
+module "alb" {
+  source     = "./modules/alb"
+  depends_on = [module.vpc, module.security-groups, module.eks]
+
+  project_name = var.project_name
+  team         = var.team
+  environment  = var.environment
+  owner        = var.owner
+  cluster_name  = var.cluster_name
+
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+}
+
 module "iam" {
   source     = "./modules/iam"
   depends_on = [module.eks, module.dynamodb, module.sqs, module.secrets-manager, module.kms]
