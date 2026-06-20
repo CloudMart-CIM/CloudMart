@@ -29,7 +29,7 @@ data:
   USER_DB_BACKEND: "postgres"
   DB_HOST: "cloudmart-user-db.cjc6cqeq0ser.ap-south-1.rds.amazonaws.com"
   DB_PORT: "5432"
-  DB_NAME: "cloudmart_userr-db"
+  DB_NAME: "cloudmart_users"
   DB_USER: "cloudmartadmin"
   DB_SSLMODE: "require"
   DB_SECRET_NAME: "cloudmart/prod/user-service/db"
