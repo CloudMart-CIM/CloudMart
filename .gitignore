@@ -33,3 +33,7 @@ venv/
 
 # Logs
 *.log
+  notes.txt
+
+# k8s/secrets
+k8s/secrets/*.yaml

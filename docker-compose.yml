@@ -31,7 +31,9 @@ services:
     environment:
       - PORT=8002
       - PRODUCT_SERVICE_URL=http://product-service:8001
-      - QUEUE_BACKEND=memory           # Change to sqs|pubsub|servicebus for cloud
+      - AWS_REGION=ap-south-1
+      - QUEUE_BACKEND=sqs               # Change to memory|pubsub|servicebus for local/cloud tests
+      - SQS_QUEUE_URL=https://sqs.ap-south-1.amazonaws.com/145023091806/cloudmart-order-events
     depends_on:
       product-service:
         condition: service_healthy

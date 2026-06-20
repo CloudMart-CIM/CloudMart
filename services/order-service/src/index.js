@@ -18,6 +18,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
+const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 
 const app = express();
 const PORT = process.env.PORT || 8002;
@@ -68,17 +69,34 @@ seedOrders.forEach((o) => orders.set(o.id, o));
  */
 async function publishOrderEvent(event) {
   const backend = (process.env.QUEUE_BACKEND || 'memory').toLowerCase();
-
   if (backend === 'sqs') {
-    // TODO: AWS SQS — use @aws-sdk/client-sqs
-    // const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
-    // const client = new SQSClient({ region: process.env.AWS_REGION });
-    // await client.send(new SendMessageCommand({
-    //   QueueUrl: process.env.SQS_QUEUE_URL,
-    //   MessageBody: JSON.stringify(event),
-    // }));
-    console.log('[SQS] Would publish event:', event.type);
-    eventLog.push(event);
+    const queueUrl = process.env.SQS_QUEUE_URL;
+    if (!queueUrl) {
+      console.error('[SQS] SQS_QUEUE_URL not set — falling back to in-memory log');
+      eventLog.push(event);
+      return;
+    }
+
+    try {
+      const sqsClient = new SQSClient({ region: process.env.AWS_REGION || 'ap-south-1' });
+      const msg = {
+        QueueUrl: queueUrl,
+        MessageBody: JSON.stringify(event),
+        MessageAttributes: {
+          eventType: { DataType: 'String', StringValue: event.type || 'ORDER_EVENT' },
+          eventId: { DataType: 'String', StringValue: event.orderId || uuidv4() }
+        }
+      };
+
+      await sqsClient.send(new SendMessageCommand(msg));
+      console.log('[SQS] Published event:', event.type, event.orderId || 'no-id');
+      return;
+    } catch (err) {
+      console.error('[SQS] Publish failed — falling back to in-memory log:', err.message);
+      // keep event for local debugging; do not fail the request path
+      eventLog.push({ ...event, _sqs_error: err.message });
+      return;
+    }
   } else if (backend === 'pubsub') {
     // TODO: GCP Pub/Sub — use @google-cloud/pubsub
     // const { PubSub } = require('@google-cloud/pubsub');

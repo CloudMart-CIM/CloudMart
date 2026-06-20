@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: order-service-sa
+  namespace: cloudmart-prod
+  labels:
+    app: order-service
+    component: backend
+    service: order-service
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::145023091806:role/cloudmart-order-service-role
+automountServiceAccountToken: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: order-service-sa
+  namespace: cloudmart-staging
+  labels:
+    app: order-service
+    component: backend
+    service: order-service
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::145023091806:role/cloudmart-order-service-role
+automountServiceAccountToken: true
