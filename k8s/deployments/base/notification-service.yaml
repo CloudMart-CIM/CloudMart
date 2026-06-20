@@ -49,6 +49,11 @@ spec:
             configMapKeyRef:
               name: cloudmart-config
               key: SES_SENDER_EMAIL
+        - name: RECIPIENT_EMAIL_OVERRIDE
+          valueFrom:
+            configMapKeyRef:
+              name: cloudmart-config
+              key: RECIPIENT_EMAIL_OVERRIDE
         - name: POLL_INTERVAL_MS
           valueFrom:
             configMapKeyRef:
