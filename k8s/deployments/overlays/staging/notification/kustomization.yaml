@@ -3,4 +3,4 @@ kind: Component
 
 images:
   - name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/notification-service
-    newTag: ba6b4b14b767e53997041f5b165d14505e958b3f
+    newTag: 1e5c3edd8ade52f08062ff96a592ae56cc68ffe5
