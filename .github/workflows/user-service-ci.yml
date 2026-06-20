@@ -98,7 +98,7 @@ jobs:
           context: services/user-service
           file: services/user-service/Dockerfile
           load: true
-          tags: | 
+          tags: |
             ${{ env.ECR_REGISTRY_URL }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
             ${{ env.ECR_REGISTRY_URL }}/${{ env.ECR_REPOSITORY }}:latest
 
@@ -113,9 +113,58 @@ jobs:
           exit-code: "1"
 
       - name: Push Docker image to ECR
-        run: | 
+        run: |
           docker push ${{ env.ECR_REGISTRY_URL }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           docker push ${{ env.ECR_REGISTRY_URL }}/${{ env.ECR_REPOSITORY }}:latest
+
+  update-gitops-manifest:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git 
+        run: | 
+          git config user.name "github-actions" 
+          git config user.email "github-actions@github.com" 
+      - name: Sync with remote branch 
+        run: | 
+          BRANCH=${{ github.ref_name }} 
+          git fetch origin 
+          git checkout $BRANCH 
+          git pull --rebase origin $BRANCH
+
+      - name: Update user image tag (staging)
+        if: github.ref_name == 'develop'
+        run: |
+          sed -i "s/newTag:.*/newTag: ${{ github.sha }}/" \
+          k8s/deployments/overlays/staging/user/kustomization.yaml
+
+      - name: Update user image tag (production)
+        if: github.ref_name == 'main'
+        run: |
+          sed -i "s/newTag:.*/newTag: ${{ github.sha }}/" \
+          k8s/deployments/overlays/prod/user/kustomization.yaml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          BRANCH=${{ github.ref_name }}
+
+          git add .
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(user): update image tag to ${{ github.sha }}" || exit 0
+          git push origin HEAD:$BRANCH
 
   # --- PROD MANUAL APPROVAL GATE ---
   # If merging to main, this forces the workflow to pause until you approve.
