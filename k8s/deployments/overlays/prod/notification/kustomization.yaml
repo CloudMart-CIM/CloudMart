@@ -1,0 +1,6 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+images:
+  - name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/notification-service
+    newTag: latest
