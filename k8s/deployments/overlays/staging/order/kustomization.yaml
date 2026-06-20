@@ -3,4 +3,4 @@ kind: Component
 
 images:
   - name: 145023091806.dkr.ecr.ap-south-1.amazonaws.com/cloudmart/order-service
-    newTag: latest
+    newTag: e416102af083581851500f635af763eb7b5d11b6
