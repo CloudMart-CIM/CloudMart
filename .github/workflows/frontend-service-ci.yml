@@ -133,6 +133,15 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Configure Git 
+        run: | 
+          git config user.name "github-actions" 
+          git config user.email "github-actions@github.com" 
+      - name: Sync with remote branch 
+        run: | 
+          BRANCH=${{ github.ref_name }} git fetch origin git checkout $BRANCH 
+          git pull --rebase origin $BRANCH
+
       - name: Update frontend image tag (staging)
         if: github.ref_name == 'develop'
         run: |
@@ -152,10 +161,10 @@ jobs:
 
           BRANCH=${{ github.ref_name }}
 
-          git pull --rebase origin $BRANCH
           git add .
+          git diff --cached --quiet && exit 0
           git commit -m "chore(frontend): update image tag to ${{ github.sha }}" || exit 0
-          git push origin $BRANCH
+          git push origin HEAD:$BRANCH
 
   # --- PROD MANUAL APPROVAL GATE ---
   production-gate:
