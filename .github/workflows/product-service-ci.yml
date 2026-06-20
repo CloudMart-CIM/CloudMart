@@ -118,6 +118,44 @@ jobs:
           docker push ${{ env.ECR_REGISTRY_URL }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           docker push ${{ env.ECR_REGISTRY_URL }}/${{ env.ECR_REPOSITORY }}:latest
 
+  update-gitops-manifest:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update product image tag (staging)
+        if: github.ref_name == 'develop'
+        run: |
+          sed -i "s/newTag:.*/newTag: ${{ github.sha }}/" \
+          k8s/deployments/overlays/staging/product/kustomization.yaml
+
+      - name: Update product image tag (production)
+        if: github.ref_name == 'main'
+        run: |
+          sed -i "s/newTag:.*/newTag: ${{ github.sha }}/" \
+          k8s/deployments/overlays/prod/product/kustomization.yaml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          BRANCH=${{ github.ref_name }}
+
+          git pull --rebase origin $BRANCH
+          git add .
+          git commit -m "chore(product): update image tag to ${{ github.sha }}" || exit 0
+          git push origin $BRANCH
+
   # --- PROD MANUAL APPROVAL GATE ---
   # If merging to main, this forces the workflow to pause until you approve.
   # Once approved, it successfully finishes, allowing the smoke-test to execute.
