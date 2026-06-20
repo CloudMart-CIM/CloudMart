@@ -138,7 +138,9 @@ jobs:
           git config user.email "github-actions@github.com" 
       - name: Sync with remote branch 
         run: | 
-          BRANCH=${{ github.ref_name }} git fetch origin git checkout $BRANCH 
+          BRANCH=${{ github.ref_name }} 
+          git fetch origin 
+          git checkout $BRANCH 
           git pull --rebase origin $BRANCH
 
       - name: Update notification image tag (staging)
