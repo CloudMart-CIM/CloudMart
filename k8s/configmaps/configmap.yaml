@@ -24,6 +24,7 @@ data:
   NOTIFICATION_EMAIL_BACKEND: "ses"
   NOTIFICATION_POLL_INTERVAL: "5000"
   SES_SENDER_EMAIL: "rinduwara0@gmail.com"
+  RECIPIENT_EMAIL_OVERRIDE: "ashaninduwara2018@gmail.com"
 
   # User Service
   USER_DB_BACKEND: "postgres"
