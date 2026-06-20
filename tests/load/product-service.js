@@ -11,6 +11,6 @@ export const options = {
 };
 
 export default function () {
-  http.get('http://localhost:8001/products');
+  http.get('http://k8s-cloudmar-cloudmar-ba92bd1afd-1163610694.ap-south-1.elb.amazonaws.com/api/products');
   sleep(0.1);
 }
