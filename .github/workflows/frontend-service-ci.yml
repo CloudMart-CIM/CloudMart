@@ -119,6 +119,17 @@ jobs:
           docker push ${{ env.ECR_REGISTRY_URL }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
           docker push ${{ env.ECR_REGISTRY_URL }}/${{ env.ECR_REPOSITORY }}:latest
 
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ap-south-1 \
+            --name cloudmart-eks
+
+      - name: Rollout frontend
+        run: |
+          kubectl rollout restart deployment/frontend -n cloudmart-staging
+          kubectl rollout status deployment/frontend -n cloudmart-staging
+
   # --- PROD MANUAL APPROVAL GATE ---
   production-gate:
     runs-on: ubuntu-latest
